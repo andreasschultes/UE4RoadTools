@@ -7,14 +7,14 @@
 #include "Road.h"
 
 
-ARoad::ARoad(const class FPostConstructInitializeProperties& PCIP)
-: Super(PCIP)
+ARoad::ARoad(const FObjectInitializer& ObjectInitializer)
+: Super(ObjectInitializer)
 {
-	Root = PCIP.CreateAbstractDefaultSubobject<USceneComponent>(this, TEXT("Root"));
+	Root = ObjectInitializer.CreateAbstractDefaultSubobject<USceneComponent>(this, TEXT("Root"));
 	Root->SetMobility(EComponentMobility::Static);
 	RootComponent = Root;
 
-	Spline = PCIP.CreateDefaultSubobject<USplineComponent>(this, TEXT("Spline"));
+	Spline = ObjectInitializer.CreateDefaultSubobject<USplineComponent>(this, TEXT("Spline"));
 	Spline->SetMobility(EComponentMobility::Static);
 	Spline->AttachTo(Root);
 
@@ -168,7 +168,8 @@ void ARoad::UpdateSplineSegment(int32 SegmentIndex, int32 SplineStartIndex, int3
 		comp->AttachParent = Root;
 		comp->SetMobility(EComponentMobility::Static);
 		comp->RegisterComponent();
-		comp->bCreatedByConstructionScript = true;
+        
+	//	comp->bCreatedByConstructionScript = true;
 	}
 }
 

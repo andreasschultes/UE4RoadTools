@@ -50,13 +50,15 @@ struct FRoadSegment
 UCLASS(HideCategories=(Activation, Spline, Input))
 class ARoad : public AActor
 {
-	GENERATED_UCLASS_BODY()
+	GENERATED_BODY()
+public:
+    ARoad(const FObjectInitializer& ObjectInitializer= FObjectInitializer::Get());
 
 	UPROPERTY()
-	TSubobjectPtr<USceneComponent> Root;
+	USceneComponent* Root;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Road)
-	TSubobjectPtr<USplineComponent> Spline;
+	USplineComponent* Spline;
 
 	/** The default mesh to use when a segment does not define one */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Road)
