@@ -14,7 +14,7 @@ ARoad::ARoad(const FObjectInitializer& ObjectInitializer)
 	Root->SetMobility(EComponentMobility::Static);
 	RootComponent = Root;*/
 
-	Spline = ObjectInitializer.CreateDefaultSubobject<USplineComponent>(this, TEXT("Spline"));
+	Spline = ObjectInitializer.CreateDefaultSubobject<URoadSplineComponent>(this, TEXT("Spline"));
 	Spline->SetMobility(EComponentMobility::Static);
 	Spline->AttachTo(RootComponent);
 
@@ -22,13 +22,6 @@ ARoad::ARoad(const FObjectInitializer& ObjectInitializer)
 		(TEXT("StaticMesh'/RoadTools/Meshes/Road_Plain.Road_Plain'"));
 	DefaultMesh = MeshFinder.Object;
 
-	EndScale = FVector2D(1.f, 1.f);
-	EndRoll = 0;
-    Segments.Reset(10);
-    Segments.Emplace();
-    
-
-   // Segments.Emplace((UStaticMesh*)nullptr,4,FVector2D(1.0f,1.0f),0.0f);
 }
 
 
@@ -41,7 +34,7 @@ void ARoad::PostEditMove(bool bFinished)
 	{
         if(Spline->GetNumSplinePoints()>1)
         {
-            Segments.SetNum(Spline->GetNumSplinePoints()-1);
+            Spline->RoadSplineSegmentInfo.SetNum(Spline->GetNumSplinePoints()-1);
             //RerunConstructionScripts();
         }
 		RerunConstructionScripts();
@@ -79,7 +72,7 @@ void ARoad::OnConstruction(const FTransform& Transform)
 		int32 SplineEndIndex = i;
 
 		// bail early if there aren't enough segments created to cover the whole spline
-		if (SplineStartIndex > Segments.Num() - 1)
+		if (SplineStartIndex > Spline->RoadSplineSegmentInfo.Num() - 1)
 		{
 			break;
 		}
@@ -103,18 +96,18 @@ FVector ARoad::GetLocalTangentAtDistanceAlongSpline(float Distance)
 
 void ARoad::UpdateSplineSegment(int32 SegmentIndex, int32 SplineStartIndex, int32 SplineEndIndex)
 {
-	FRoadSegment& Segment = Segments[SegmentIndex];
+	FRoadSplineSegmentInfo& Segment = Spline->RoadSplineSegmentInfo[SegmentIndex];
 
 	float distToStart = Spline->GetDistanceAlongSplineAtSplinePoint(SplineStartIndex);
 	float distToEnd = Spline->GetDistanceAlongSplineAtSplinePoint(SplineEndIndex);
 
 	float segmentDist = distToEnd - distToStart;
-	float subdivDist = segmentDist / Segment.NumSubDivisions;
+	float subdivDist = segmentDist / Segment.NumberMeshPerSegment;
 
 	FVector segmentStartTangent = GetLocalTangentAtDistanceAlongSpline(distToStart);
 	FVector segmentEndTangent = GetLocalTangentAtDistanceAlongSpline(distToEnd);
 
-	for (int32 i = 0; i < Segment.NumSubDivisions; i++)
+	for (int32 i = 0; i < Segment.NumberMeshPerSegment; i++)
 	{
 		float subdivStartDist = distToStart + (i * subdivDist);
 		float subdivEndDist = distToStart + ((i + 1) * subdivDist);
@@ -147,43 +140,32 @@ void ARoad::UpdateSplineSegment(int32 SegmentIndex, int32 SplineStartIndex, int3
 		FVector startTangent = Spline->GetWorldDirectionAtDistanceAlongSpline(subdivStartDist);
 		startTangent = Spline->ComponentToWorld.InverseTransformVector(startTangent);
 		// the tangent is currently normalized (because we used GetWorldDirection), so scale it up
-		startTangent *= segmentStartTangent.Size() / Segment.NumSubDivisions;
+		startTangent *= segmentStartTangent.Size() / Segment.NumberMeshPerSegment;
 		comp->SplineParams.StartTangent = startTangent;
 
 		FVector endTangent = Spline->GetWorldDirectionAtDistanceAlongSpline(subdivEndDist);
 		endTangent = Spline->ComponentToWorld.InverseTransformVector(endTangent);
 		// the tangent is currently normalized (because we used GetWorldDirection), so scale it up
-		endTangent *= segmentEndTangent.Size() / Segment.NumSubDivisions;
+		endTangent *= segmentEndTangent.Size() / Segment.NumberMeshPerSegment;
 		comp->SplineParams.EndTangent = endTangent;
 
-		// if this is the last segment, use the special EndRoll/EndScale variables.
-		float nextRoll;
-		FVector2D nextScale;
-		if (SegmentIndex == Segments.Num() - 1)
-		{
-			nextRoll = EndRoll;
-			nextScale = EndScale;
-		}
-		// otherwise just use the values for the next segment
-		else
-		{
-			FRoadSegment& nextSegment = Segments[SegmentIndex + 1];
-			nextRoll = nextSegment.Roll;
-			nextScale = nextSegment.Scale;
-		}
 
-		// for multiple subdivisions in one segment, lerp between the beginning and end of the segment
-		float startLerpAlpha = i * subdivDist / segmentDist;
-		float endLerpAlpha = (i + 1) * subdivDist / segmentDist;
+        float startRoll=FMath::DegreesToRadians(Spline->GetRollAtDistanceAlongSpline(subdivStartDist,ESplineCoordinateSpace::Local));
+        float endRoll=FMath::DegreesToRadians(Spline->GetRollAtDistanceAlongSpline(subdivEndDist,ESplineCoordinateSpace::Local));
+        
+        FVector startSplineScale=Spline->GetScaleAtDistanceAlongSpline(subdivStartDist);
+        FVector2D startScale(startSplineScale.Y,startSplineScale.Z);
+        
+        FVector endSplineScale=Spline->GetScaleAtDistanceAlongSpline(subdivEndDist);
+        FVector2D endScale(endSplineScale.Y,endSplineScale.Z);
+ 
+		comp->SplineParams.StartRoll = startRoll;
 
-		float startRoll = FMath::Lerp(Segment.Roll, nextRoll, startLerpAlpha);
-		comp->SplineParams.StartRoll = FMath::DegreesToRadians(startRoll);
 
-		float endRoll = FMath::Lerp(Segment.Roll, nextRoll, endLerpAlpha);
-		comp->SplineParams.EndRoll = FMath::DegreesToRadians(endRoll);
+		comp->SplineParams.EndRoll = endRoll;
 
-		comp->SplineParams.StartScale = FMath::Lerp(Segment.Scale, nextScale, startLerpAlpha);
-		comp->SplineParams.EndScale = FMath::Lerp(Segment.Scale, nextScale, endLerpAlpha);
+		comp->SplineParams.StartScale = startScale;
+		comp->SplineParams.EndScale = endScale;
 
 		// make sure the spline data updates correctly
 		comp->MarkSplineParamsDirty();

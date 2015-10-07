@@ -5,9 +5,11 @@
 
 #pragma once
 
+
 #include "GameFramework/Actor.h"
 #include "Components/SplineComponent.h"
 #include "Components/SplineMeshComponent.h"
+#include "RoadSplineComponent.h"
 #include "Road.generated.h"
 
 
@@ -59,7 +61,7 @@ struct FRoadSegment
 /**
 * A repeating mesh or meshes along a spline
 */
-UCLASS(HideCategories=(Activation, Spline, Input))
+UCLASS(HideCategories=(Activation,  Input))
 class ARoad : public AActor
 {
 	GENERATED_BODY()
@@ -70,23 +72,15 @@ public:
 	USceneComponent* Root;*/
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Road)
-	USplineComponent* Spline;
+	URoadSplineComponent* Spline;
 
 	/** The default mesh to use when a segment does not define one */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Road)
 	UStaticMesh* DefaultMesh;
 
-	/** Segment data for the whole road */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Road)
-	TArray<FRoadSegment> Segments;
 
-	/** The scale value for the last spline point */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Road)
-	FVector2D EndScale;
 
-	/** The roll value for the last spline point */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Road)
-	float EndRoll;
+
 
 	/** rebuild SplineMeshComponents on construction */
 	virtual void OnConstruction(const FTransform& transform) override;
