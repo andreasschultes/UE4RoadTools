@@ -38,23 +38,17 @@ struct FRoadSegment
 	float Roll;
 
 	FRoadSegment()
-    :Mesh(nullptr),
-     NumSubDivisions(4),
-     Scale(FVector2D(1.f, 1.f)),
-     Roll(0)
+		:Mesh(nullptr),
+		NumSubDivisions(4),
+		Scale(FVector2D(1.f, 1.f)),
+		Roll(0)
 	{
-    }
- /*   FRoadSegment(const int _NumSubDevision=4,const FVector2D& _Scale=FVector2D(1.f,1.f),const float _Roll=0.0f,UStaticMesh* _Mesh=nullptr)
-    :Mesh(_Mesh),
-     NumSubDivisions(_NumSubDevision),
-     Scale(_Scale),
-     Roll(_Roll)
-    {
-    }*/
-    void Destroy()
-    {
-            Mesh=nullptr;
-    }
+	}
+
+	void Destroy()
+	{
+		Mesh=nullptr;
+	}
 };
 
 

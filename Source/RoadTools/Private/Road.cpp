@@ -150,14 +150,14 @@ void ARoad::UpdateSplineSegment(int32 SegmentIndex, int32 SplineStartIndex, int3
 		comp->SplineParams.EndTangent = endTangent;
 
 
-        float startRoll=FMath::DegreesToRadians(Spline->GetRollAtDistanceAlongSpline(subdivStartDist,ESplineCoordinateSpace::Local));
-        float endRoll=FMath::DegreesToRadians(Spline->GetRollAtDistanceAlongSpline(subdivEndDist,ESplineCoordinateSpace::Local));
-        
-        FVector startSplineScale=Spline->GetScaleAtDistanceAlongSpline(subdivStartDist);
-        FVector2D startScale(startSplineScale.Y,startSplineScale.Z);
-        
-        FVector endSplineScale=Spline->GetScaleAtDistanceAlongSpline(subdivEndDist);
-        FVector2D endScale(endSplineScale.Y,endSplineScale.Z);
+		float startRoll=FMath::DegreesToRadians(Spline->GetRollAtDistanceAlongSpline(subdivStartDist,ESplineCoordinateSpace::Local));
+		float endRoll=FMath::DegreesToRadians(Spline->GetRollAtDistanceAlongSpline(subdivEndDist,ESplineCoordinateSpace::Local));
+
+		FVector startSplineScale=Spline->GetScaleAtDistanceAlongSpline(subdivStartDist);
+		FVector2D startScale(startSplineScale.Y,startSplineScale.Z);
+
+		FVector endSplineScale=Spline->GetScaleAtDistanceAlongSpline(subdivEndDist);
+		FVector2D endScale(endSplineScale.Y,endSplineScale.Z);
  
 		comp->SplineParams.StartRoll = startRoll;
 
