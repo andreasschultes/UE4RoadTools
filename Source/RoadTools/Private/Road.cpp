@@ -10,13 +10,13 @@
 ARoad::ARoad(const FObjectInitializer& ObjectInitializer)
 : Super(ObjectInitializer)
 {
-	Root = ObjectInitializer.CreateAbstractDefaultSubobject<USceneComponent>(this, TEXT("Root"));
+/*	Root = ObjectInitializer.CreateAbstractDefaultSubobject<USceneComponent>(this, TEXT("Root"));
 	Root->SetMobility(EComponentMobility::Static);
-	RootComponent = Root;
+	RootComponent = Root;*/
 
 	Spline = ObjectInitializer.CreateDefaultSubobject<USplineComponent>(this, TEXT("Spline"));
 	Spline->SetMobility(EComponentMobility::Static);
-	Spline->AttachTo(Root);
+	Spline->AttachTo(RootComponent);
 
 	static ConstructorHelpers::FObjectFinder<UStaticMesh> MeshFinder
 		(TEXT("StaticMesh'/RoadTools/Meshes/Road_Plain.Road_Plain'"));
@@ -24,6 +24,11 @@ ARoad::ARoad(const FObjectInitializer& ObjectInitializer)
 
 	EndScale = FVector2D(1.f, 1.f);
 	EndRoll = 0;
+    Segments.Reset(10);
+    Segments.Emplace();
+    
+
+   // Segments.Emplace((UStaticMesh*)nullptr,4,FVector2D(1.0f,1.0f),0.0f);
 }
 
 
@@ -34,10 +39,30 @@ void ARoad::PostEditMove(bool bFinished)
 	// so force a complete update here so that we can see mesh changes as the user edits the spline
 	if (bFinished)
 	{
+        if(Spline->GetNumSplinePoints()>1)
+        {
+            Segments.SetNum(Spline->GetNumSplinePoints()-1);
+            //RerunConstructionScripts();
+        }
 		RerunConstructionScripts();
 	}
 	Super::PostEditMove(bFinished);
 }
+
+void ARoad::PostEditChangeChainProperty(FPropertyChangedChainEvent& PropertyChangedEvent)
+{
+    if (PropertyChangedEvent.Property != nullptr)
+    {
+        static const FName SplineName=GET_MEMBER_NAME_CHECKED(ARoad,Spline);
+        const FName PropertyName(PropertyChangedEvent.Property->GetFName());
+        if(PropertyName==SplineName)
+        {
+
+        }
+    }
+    Super::PostEditChangeChainProperty(PropertyChangedEvent);
+}
+
 #endif
 
 
@@ -164,12 +189,14 @@ void ARoad::UpdateSplineSegment(int32 SegmentIndex, int32 SplineStartIndex, int3
 		comp->MarkSplineParamsDirty();
 
 		// finish creating and registering the component
-		comp->AttachTo(Root);
-		comp->AttachParent = Root;
+		comp->AttachTo(RootComponent);
+		comp->AttachParent = RootComponent;
 		comp->SetMobility(EComponentMobility::Static);
 		comp->RegisterComponent();
         
-	//	comp->bCreatedByConstructionScript = true;
+
+        
+		comp->CreationMethod = EComponentCreationMethod::SimpleConstructionScript;
 	}
 }
 

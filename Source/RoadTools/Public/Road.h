@@ -36,11 +36,23 @@ struct FRoadSegment
 	float Roll;
 
 	FRoadSegment()
+    :Mesh(nullptr),
+     NumSubDivisions(4),
+     Scale(FVector2D(1.f, 1.f)),
+     Roll(0)
 	{
-		NumSubDivisions = 4;
-		Scale = FVector2D(1.f, 1.f);
-		Roll = 0;
-	}
+    }
+ /*   FRoadSegment(const int _NumSubDevision=4,const FVector2D& _Scale=FVector2D(1.f,1.f),const float _Roll=0.0f,UStaticMesh* _Mesh=nullptr)
+    :Mesh(_Mesh),
+     NumSubDivisions(_NumSubDevision),
+     Scale(_Scale),
+     Roll(_Roll)
+    {
+    }*/
+    void Destroy()
+    {
+            Mesh=nullptr;
+    }
 };
 
 
@@ -54,8 +66,8 @@ class ARoad : public AActor
 public:
     ARoad(const FObjectInitializer& ObjectInitializer= FObjectInitializer::Get());
 
-	UPROPERTY()
-	USceneComponent* Root;
+	/*UPROPERTY()
+	USceneComponent* Root;*/
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Road)
 	USplineComponent* Spline;
@@ -82,6 +94,8 @@ public:
 #if WITH_EDITOR
 	/** force OnConstruction to run again when the spline is edited */
 	virtual void PostEditMove(bool bFinished) override;
+    
+    void PostEditChangeChainProperty(FPropertyChangedChainEvent& PropertyChangedEvent) override;
 #endif
 
 	FVector GetLocalTangentAtDistanceAlongSpline(float Distance);
