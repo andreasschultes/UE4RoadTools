@@ -9,7 +9,29 @@
 URoadSplineComponent::URoadSplineComponent(const FObjectInitializer& ObjectInitializer)
 :Super(ObjectInitializer)
 {
-    RoadSplineSegmentInfo.Reset(10);
-    RoadSplineSegmentInfo.Emplace();
+	RoadSplineSegmentInfo.Reset(10);
+	RoadSplineSegmentInfo.Emplace();
     
 }
+#if WITH_EDITOR
+void URoadSplineComponent::PostEditChangeChainProperty(FPropertyChangedChainEvent& PropertyChangedEvent)
+{
+	if (PropertyChangedEvent.Property != nullptr)
+	{
+		static const FName ReparamStepsPerSegmentName = GET_MEMBER_NAME_CHECKED(USplineComponent, ReparamStepsPerSegment);
+		static const FName StationaryEndpointsName = GET_MEMBER_NAME_CHECKED(USplineComponent, bStationaryEndpoints);
+		static const FName DefaultUpVectorName = GET_MEMBER_NAME_CHECKED(USplineComponent, DefaultUpVector);
+		
+
+		const FName PropertyName(PropertyChangedEvent.Property->GetFName());
+		if (PropertyName == ReparamStepsPerSegmentName ||
+			PropertyName == StationaryEndpointsName ||
+			PropertyName == DefaultUpVectorName )
+		{
+			if(AActor* Owner=GetOwner())
+				Owner->RerunConstructionScripts();
+		}
+	}
+	Super::PostEditChangeChainProperty(PropertyChangedEvent);
+}
+#endif

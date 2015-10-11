@@ -56,7 +56,7 @@ struct FRoadSegment
 * A repeating mesh or meshes along a spline
 */
 UCLASS(HideCategories=(Activation,  Input))
-class ARoad : public AActor
+class ROADTOOLS_API ARoad : public AActor
 {
 	GENERATED_BODY()
 public:
@@ -72,14 +72,15 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Road)
 	UStaticMesh* DefaultMesh;
 
+	
 
-
-
+	virtual void BeginPlay() override;
 
 	/** rebuild SplineMeshComponents on construction */
 	virtual void OnConstruction(const FTransform& transform) override;
 
 #if WITH_EDITOR
+	//virtual void PreSave() override;
 	/** force OnConstruction to run again when the spline is edited */
 	virtual void PostEditMove(bool bFinished) override;
     

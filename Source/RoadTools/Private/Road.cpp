@@ -34,7 +34,10 @@ void ARoad::PostEditMove(bool bFinished)
 	{
         if(Spline->GetNumSplinePoints()>1)
         {
-            Spline->RoadSplineSegmentInfo.SetNum(Spline->GetNumSplinePoints()-1);
+			if(Spline->IsClosedLoop())
+				Spline->RoadSplineSegmentInfo.SetNum(Spline->GetNumSplinePoints(),false);
+			else
+				Spline->RoadSplineSegmentInfo.SetNum(Spline->GetNumSplinePoints()-1,false);
             //RerunConstructionScripts();
         }
 		RerunConstructionScripts();
@@ -62,27 +65,30 @@ void ARoad::PostEditChangeChainProperty(FPropertyChangedChainEvent& PropertyChan
 void ARoad::OnConstruction(const FTransform& Transform)
 {
 	Super::OnConstruction(Transform);
+	// clear out the old segments and force GC to prevent memory leaks
+	GetWorld()->ForceGarbageCollection(true);
 
 	// start at 1 so this runs once per segment instead of once per point
-	for (int32 i = 1; i < Spline->GetNumSplinePoints(); i++)
+	for (int32 i = 0; i < Spline->GetNumSplinePoints()-1; i++)
 	{
 		// make some variables for readability
-		int32 SegmentIndex = i - 1;
-		int32 SplineStartIndex = i - 1;
-		int32 SplineEndIndex = i;
+		int32 SegmentIndex = i;
+		int32 SplineStartIndex = i;
+		int32 SplineEndIndex = i+1;
 
-		// bail early if there aren't enough segments created to cover the whole spline
-		if (SplineStartIndex > Spline->RoadSplineSegmentInfo.Num() - 1)
-		{
+
+			
+		if(SegmentIndex>Spline->RoadSplineSegmentInfo.Num()-1)
 			break;
-		}
-
-		// clear out the old segments and force GC to prevent memory leaks
-		GetWorld()->ForceGarbageCollection(true);
 
 		// regenerate this segment
 		UpdateSplineSegment(SegmentIndex, SplineStartIndex, SplineEndIndex);
 	}
+	if(Spline->IsClosedLoop())
+	{
+		UpdateSplineSegment(Spline->RoadSplineSegmentInfo.Num()-1, Spline->GetNumSplinePoints()-1, Spline->GetNumSplinePoints());
+	}
+		
 }
 
 
@@ -175,10 +181,45 @@ void ARoad::UpdateSplineSegment(int32 SegmentIndex, int32 SplineStartIndex, int3
 		comp->AttachParent = RootComponent;
 		comp->SetMobility(EComponentMobility::Static);
 		comp->RegisterComponent();
+
         
 
         
 		comp->CreationMethod = EComponentCreationMethod::SimpleConstructionScript;
 	}
 }
-
+/*
+#ifdef WITH_EDITOR
+void ARoad::PreSave()
+{
+	Super::PreSave();
+	const TArray<UActorComponent*>& Components=GetComponents();
+	for(auto Component:Components)
+	{
+		USplineMeshComponent* SplineMesh=Cast<USplineMeshComponent>(Component);
+		if(SplineMesh)
+		{
+			SplineMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+			SplineMesh->RecreateCollision();
+		}
+	}
+}
+#endif
+*/
+void ARoad::BeginPlay()
+{
+	RerunConstructionScripts();
+	Super::BeginPlay();
+/*
+	const TArray<UActorComponent*>& Components=GetComponents();
+	for(auto Component:Components)
+	{
+		USplineMeshComponent* SplineMesh=Cast<USplineMeshComponent>(Component);
+		if(SplineMesh)
+		{
+			SplineMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+			//SplineMesh->RecreateCollision();
+		}
+	}
+*/
+}

@@ -14,31 +14,41 @@
 USTRUCT()
 struct FRoadSplineSegmentInfo
 {
-    GENERATED_USTRUCT_BODY()
+	GENERATED_USTRUCT_BODY()
     
-    /** Mesh for this Segment */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Segment)
-    UStaticMesh* Mesh;
-    /** Number of Meshes for this segment */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Segment)
-    int32 NumberMeshPerSegment;
+	/** Mesh for this Segment */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Segment)
+	UStaticMesh* Mesh;
+	/** Number of Meshes for this segment */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Segment)
+	int32 NumberMeshPerSegment;
     
-    FRoadSplineSegmentInfo():
-    Mesh(nullptr),
-    NumberMeshPerSegment(4)
-    {};
+	FRoadSplineSegmentInfo():
+	Mesh(nullptr),
+	NumberMeshPerSegment(4)
+	{};
+	
+	void Destroy()
+	{
+		Mesh=nullptr;
+	}
 };
     
 
 
 UCLASS()
-class URoadSplineComponent: public USplineComponent
+class ROADTOOLS_API URoadSplineComponent: public USplineComponent
 {
-    GENERATED_BODY()
+	GENERATED_BODY()
 public:
-    URoadSplineComponent(const FObjectInitializer& ObjectInitializer= FObjectInitializer::Get());
+	URoadSplineComponent(const FObjectInitializer& ObjectInitializer= FObjectInitializer::Get());
 
-    /** Road segment info array */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Segment)
-    TArray<FRoadSplineSegmentInfo> RoadSplineSegmentInfo;
+	/** Road segment info array */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Segment)
+	TArray<FRoadSplineSegmentInfo> RoadSplineSegmentInfo;
+	
+#if WITH_EDITOR
+
+	virtual void PostEditChangeChainProperty(FPropertyChangedChainEvent& PropertyChangedEvent) override;
+#endif
 };
